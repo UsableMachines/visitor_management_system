@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Watchlist — VMS{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-exclamation-triangle"></i> Watchlist</h1>
+  <div class="btn-group">
+    <form class="form-inline" action="{{ url_for('watchlist.watchlist_list') }}" method="GET">
+      <input type="text" name="q" class="form-control" placeholder="Search…" value="{{ search }}" style="width:200px;">
+      <button type="submit" class="btn btn-secondary btn-sm"><i class="fas fa-search"></i></button>
+    </form>
+    <a href="{{ url_for('watchlist.watchlist_new') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Add Entry</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    {% if pagination and pagination.items %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>ID Number</th><th>Severity</th><th>Reason</th><th>Status</th><th>Added</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for e in pagination.items %}
+          <tr>
+            <td><strong>{{ e.first_name }} {{ e.last_name }}</strong></td>
+            <td>{{ e.email or '—' }}</td>
+            <td>{{ e.id_number or '—' }}</td>
+            <td><span class="badge badge-{{ 'danger' if e.severity == 'high' else 'warning' if e.severity == 'medium' else 'info' }}">{{ e.severity }}</span></td>
+            <td>{{ e.reason[:40] }}{{ '…' if e.reason|length > 40 else '' }}</td>
+            <td><span class="badge badge-{{ 'success' if e.is_active else 'secondary' }}">{{ 'Active' if e.is_active else 'Inactive' }}</span></td>
+            <td style="font-size:0.8rem;color:var(--color-text-muted);">{{ e.created_at.strftime('%m/%d/%Y') if e.created_at else '—' }}</td>
+            <td>
+              <form method="POST" action="{{ url_for('watchlist.watchlist_toggle', entry_id=e.id) }}" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm {{ 'btn-secondary' if e.is_active else 'btn-primary' }}">
+                  {{ 'Deactivate' if e.is_active else 'Activate' }}
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+      {% if pagination.has_prev %}<a href="{{ url_for('watchlist.watchlist_list', page=pagination.prev_num, q=search) }}">&laquo;</a>{% endif %}
+      {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}<a href="{{ url_for('watchlist.watchlist_list', page=p, q=search) }}" class="{{ 'current' if p == pagination.page else '' }}">{{ p }}</a>{% else %}<span>…</span>{% endif %}
+      {% endfor %}
+      {% if pagination.has_next %}<a href="{{ url_for('watchlist.watchlist_list', page=pagination.next_num, q=search) }}">&raquo;</a>{% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <p style="text-align:center;color:var(--color-text-muted);padding:40px;">No watchlist entries found.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% block help_content %}
+<h4>Watchlist</h4>
+<p>The watchlist contains individuals who should be flagged or denied entry. When a visitor is registered, their name is automatically screened against active watchlist entries.</p>
+<ul>
+  <li><strong>High severity</strong> — Blocks check-in; requires security review</li>
+  <li><strong>Medium severity</strong> — Flags for review but allows check-in</li>
+  <li><strong>Low severity</strong> — Informational only</li>
+</ul>
+<p>You can deactivate an entry to stop screening without deleting it.</p>
+{% endblock %}
+{% endblock %}

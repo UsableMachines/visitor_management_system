@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% block title %}Visit {{ visit.visit_code }} — VMS{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-clipboard-list"></i> Visit {{ visit.visit_code }}</h1>
+  <a href="{{ url_for('visitors.visit_list') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+
+<!-- Status & Actions -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-header">
+    <span>
+      Status:
+      {% if visit.status.value == 'checked_in' %}
+        <span class="badge badge-success">Checked In</span>
+      {% elif visit.status.value == 'checked_out' %}
+        <span class="badge badge-secondary">Checked Out</span>
+      {% elif visit.status.value == 'denied' %}
+        <span class="badge badge-danger">Denied</span>
+      {% else %}
+        <span class="badge badge-info">{{ visit.status.value.replace('_', ' ').title() }}</span>
+      {% endif %}
+    </span>
+    {% if current_user.can_manage_visitors() %}
+    <div class="btn-group">
+      {% if visit.status.value == 'pre_registered' %}
+        <form method="POST" action="{{ url_for('visitors.visit_checkin', visit_id=visit.id) }}" style="display:inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-sign-in-alt"></i> Check In</button>
+        </form>
+        <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('denyModal').style.display='flex'"><i class="fas fa-ban"></i> Deny</button>
+      {% elif visit.status.value == 'checked_in' %}
+        <form method="POST" action="{{ url_for('visitors.visit_checkout', visit_id=visit.id) }}" style="display:inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-sign-out-alt"></i> Check Out</button>
+        </form>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Watchlist Alert -->
+{% if visit.watchlist_match_level and visit.watchlist_match_level.value in ('high', 'exact') %}
+<div class="card" style="margin-bottom:20px;border-color:var(--color-danger);">
+  <div class="card-body" style="background:rgba(232,98,10,0.08);">
+    <strong><i class="fas fa-exclamation-triangle" style="color:var(--color-danger);"></i>
+    Watchlist Alert — {{ visit.watchlist_match_level.value|upper }} match</strong>
+    <p style="margin-top:8px;color:var(--color-text-muted);">{{ visit.watchlist_details }}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- Visit Details -->
+<div class="detail-grid">
+  <div class="card">
+    <div class="card-header">Visitor Information</div>
+    <div class="card-body">
+      <div class="detail-item" style="margin-bottom:12px;">
+        <span class="detail-label">Name</span>
+        <span class="detail-value">{{ visit.visitor.full_name }}</span>
+      </div>
+      <div class="detail-item" style="margin-bottom:12px;">
+        <span class="detail-label">Email</span>
+        <span class="detail-value">{{ visit.visitor.email or '—' }}</span>
+      </div>
+      <div class="detail-item" style="margin-bottom:12px;">
+        <span class="detail-label">Phone</span>
+        <span class="detail-value">{{ visit.visitor.phone or '—' }}</span>
+      </div>
+      <div class="detail-item" style="margin-bottom:12px;">
+        <span class="detail-label">Company</span>
+        <span class="detail-value">{{ visit.visitor.company or '—' }}</span>
+      </div>
+      <div class="detail-item" style="margin-bottom:12px;">
+        <span class="detail-label">ID</span>
+        <span class="detail-value">{{ visit.visitor.id_type or '—' }} {{ visit.visitor.id_number or '' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Visit Details</div>
+    <div class="card-body">
+      <div class="detail-item" style="margin-bottom:12px;">
+        <span class="detail-label">Host</span>
+        <span class="detail-value">{{ visit.host.full_name if visit.host else '—' }}</span>
+      </div>
+      <div class="detail-item" style="margin-bottom:12px;">
+        <span class="detail-label">Purpose</span>
+        <span class="detail-value">{{ visit.purpose or '—' }}</span>
+      </div>
+      <div class="detail-item" style="margin-bottom:12px;">
+        <span class="detail-label">Expected Arrival</span>
+        <span class="detail-value">{{ visit.expected_arrival.strftime('%m/%d/%Y %H:%M') if visit.expected_arrival else '—' }}</span>
+      </div>
+      <div class="detail-item" style="margin-bottom:12px;">
+        <span class="detail-label">Checked In</span>
+        <span class="detail-value">{{ visit.checked_in_at.strftime('%m/%d/%Y %H:%M') if visit.checked_in_at else '—' }}</span>
+      </div>
+      <div class="detail-item" style="margin-bottom:12px;">
+        <span class="detail-label">Checked Out</span>
+        <span class="detail-value">{{ visit.checked_out_at.strftime('%m/%d/%Y %H:%M') if visit.checked_out_at else '—' }}</span>
+      </div>
+      {% if visit.badge %}
+      <div class="detail-item" style="margin-bottom:12px;">
+        <span class="detail-label">Badge</span>
+        <span class="detail-value">{{ visit.badge.badge_number }} ({{ visit.badge.status.value }})</span>
+      </div>
+      {% endif %}
+      {% if visit.denied_reason %}
+      <div class="detail-item" style="margin-bottom:12px;">
+        <span class="detail-label">Denial Reason</span>
+        <span class="detail-value" style="color:var(--color-danger);">{{ visit.denied_reason }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- AI Analysis Section -->
+<div class="ai-card" style="margin-top:20px;">
+  <div class="ai-card-header">
+    <span><i class="fas fa-robot"></i> AI Risk Analysis</span>
+    <button class="btn btn-primary btn-sm" id="runAiBtn" onclick="runAnalysis()">
+      <i class="fas fa-play"></i> Run Analysis
+    </button>
+  </div>
+  <div class="ai-card-body" id="aiResults">
+    {% if visit.ai_risk_level %}
+    <div style="margin-bottom:16px;">
+      <div class="detail-item" style="margin-bottom:8px;">
+        <span class="detail-label">Risk Level</span>
+        <span class="badge badge-{{ 'danger' if visit.ai_risk_level in ('critical','high') else 'warning' if visit.ai_risk_level == 'medium' else 'success' }}">
+          {{ visit.ai_risk_level }}
+        </span>
+      </div>
+      <div class="detail-item" style="margin-bottom:8px;">
+        <span class="detail-label">Risk Score</span>
+        <span class="detail-value">{{ '%.1f'|format(visit.ai_risk_score or 0) }} / 10</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Summary</span>
+        <span class="detail-value">{{ visit.ai_summary or '—' }}</span>
+      </div>
+    </div>
+    {% else %}
+    <div id="aiPlaceholder" class="config-warning" style="border-style:solid;border-color:var(--color-border);">
+      <i class="fas fa-robot"></i>
+      <h4>No Analysis Yet</h4>
+      <p>Click "Run Analysis" to screen this visitor using the Kindo AI agent.</p>
+    </div>
+    {% endif %}
+    <div id="aiLoading" style="display:none;text-align:center;padding:20px;">
+      <div class="spinner"></div>
+      <p style="margin-top:12px;color:var(--color-text-muted);">Analyzing visitor… this may take a moment.</p>
+    </div>
+    <div id="aiError" style="display:none;" class="flash flash-danger"></div>
+    <div id="aiDetail" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- Deny Modal -->
+<div id="denyModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;">
+  <div class="card" style="max-width:400px;margin:auto;">
+    <div class="card-header">Deny Entry</div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('visitors.visit_deny', visit_id=visit.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+          <label for="reason">Reason for Denial</label>
+          <textarea id="reason" name="reason" class="form-control" rows="3" required></textarea>
+        </div>
+        <div class="btn-group">
+          <button type="submit" class="btn btn-danger"><i class="fas fa-ban"></i> Deny Entry</button>
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('denyModal').style.display='none'">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block help_content %}
+<h4>Visit Detail</h4>
+<p>Full details for this visit including visitor information, visit status, badge, and AI risk analysis.</p>
+<ul>
+  <li><strong>Check In</strong> — Admits the visitor and issues a badge</li>
+  <li><strong>Check Out</strong> — Marks the visitor as departed and returns the badge</li>
+  <li><strong>Deny</strong> — Denies entry with a recorded reason</li>
+  <li><strong>Run Analysis</strong> — Sends visitor data to the Kindo AI agent for risk assessment</li>
+</ul>
+<p>Watchlist alerts appear in red when a match is detected. High/exact matches block check-in.</p>
+{% endblock %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function runAnalysis() {
+  const btn = document.getElementById('runAiBtn');
+  const loading = document.getElementById('aiLoading');
+  const errorEl = document.getElementById('aiError');
+  const detail = document.getElementById('aiDetail');
+  const placeholder = document.getElementById('aiPlaceholder');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Analyzing…';
+  loading.style.display = 'block';
+  errorEl.style.display = 'none';
+  detail.style.display = 'none';
+  if (placeholder) placeholder.style.display = 'none';
+
+  fetch('{{ url_for("api.kindo_analyze", visit_id=visit.id) }}', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCSRF()},
+  })
+  .then(r => r.json().then(d => ({ok: r.ok, data: d})))
+  .then(({ok, data}) => {
+    loading.style.display = 'none';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-play"></i> Run Analysis';
+
+    if (!ok || data.error) {
+      errorEl.textContent = data.error || 'Analysis failed.';
+      errorEl.style.display = 'block';
+      if (data.configured === false) {
+        errorEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + data.error;
+      }
+      return;
+    }
+
+    let html = '<div style="margin-bottom:16px;">';
+    html += '<div class="detail-item" style="margin-bottom:8px;"><span class="detail-label">Risk Level</span>';
+    const rl = data.risk_level || 'informational';
+    const cls = ['critical','high'].includes(rl) ? 'danger' : rl === 'medium' ? 'warning' : 'success';
+    html += '<span class="badge badge-' + cls + '">' + rl + '</span></div>';
+    html += '<div class="detail-item" style="margin-bottom:8px;"><span class="detail-label">Score</span>';
+    html += '<span class="detail-value">' + (data.score || 0).toFixed(1) + ' / 10</span></div>';
+    html += '<div class="detail-item" style="margin-bottom:8px;"><span class="detail-label">Confidence</span>';
+    html += '<span class="detail-value">' + ((data.confidence || 0) * 100).toFixed(0) + '%</span></div>';
+    html += '<div class="detail-item"><span class="detail-label">Summary</span>';
+    html += '<span class="detail-value">' + (data.summary || '—') + '</span></div></div>';
+
+    if (data.findings && data.findings.length > 0) {
+      html += '<h4 style="margin:16px 0 8px;"><i class="fas fa-search"></i> Findings</h4>';
+      data.findings.forEach(f => {
+        html += '<div class="ai-finding">';
+        html += '<div class="ai-finding-header"><span class="badge badge-' +
+          (f.severity === 'critical' || f.severity === 'high' ? 'danger' : f.severity === 'medium' ? 'warning' : 'info') +
+          '">' + f.severity + '</span> <strong>' + f.category + '</strong></div>';
+        html += '<p>' + f.description + '</p>';
+        if (f.recommendation) html += '<p style="color:var(--color-primary);font-size:0.85rem;"><i class="fas fa-lightbulb"></i> ' + f.recommendation + '</p>';
+        html += '</div>';
+      });
+    }
+
+    if (data.recommendations && data.recommendations.length > 0) {
+      html += '<h4 style="margin:16px 0 8px;"><i class="fas fa-lightbulb"></i> Recommendations</h4>';
+      data.recommendations.forEach(r => {
+        html += '<div class="ai-recommendation">';
+        html += '<strong>' + r.priority + '</strong> — ' + r.action;
+        if (r.rationale) html += '<br><span style="font-size:0.85rem;color:var(--color-text-muted);">' + r.rationale + '</span>';
+        html += '</div>';
+      });
+    }
+
+    detail.innerHTML = html;
+    detail.style.display = 'block';
+  })
+  .catch(err => {
+    loading.style.display = 'none';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-play"></i> Run Analysis';
+    errorEl.textContent = 'Network error: ' + err.message;
+    errorEl.style.display = 'block';
+  });
+}
+</script>
+{% endblock %}

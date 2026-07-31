@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Register Visitor — VMS{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-user-plus"></i> Register Visitor</h1>
+  <a href="{{ url_for('visitors.visitor_list') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+
+<div class="card" style="max-width:700px;">
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('visitors.visitor_new') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <h3 style="margin-bottom:16px;">Visitor Information</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="first_name">First Name *</label>
+          <input type="text" id="first_name" name="first_name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="last_name">Last Name *</label>
+          <input type="text" id="last_name" name="last_name" class="form-control" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="phone">Phone</label>
+          <input type="text" id="phone" name="phone" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="company">Company</label>
+        <input type="text" id="company" name="company" class="form-control">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="id_type">ID Type</label>
+          <select id="id_type" name="id_type" class="form-control">
+            <option value="">— Select —</option>
+            <option value="drivers_license">Driver's License</option>
+            <option value="passport">Passport</option>
+            <option value="state_id">State ID</option>
+            <option value="employee_badge">Employee Badge</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="id_number">ID Number</label>
+          <input type="text" id="id_number" name="id_number" class="form-control">
+        </div>
+      </div>
+
+      <h3 style="margin:24px 0 16px;">Visit Details</h3>
+      <div class="form-group">
+        <label for="host_id">Host *</label>
+        <select id="host_id" name="host_id" class="form-control" required>
+          <option value="">— Select Host —</option>
+          {% for h in hosts %}
+          <option value="{{ h.id }}">{{ h.full_name }} ({{ h.department or h.role.name }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="purpose">Purpose of Visit</label>
+        <input type="text" id="purpose" name="purpose" class="form-control" placeholder="e.g., Meeting, Interview, Delivery">
+      </div>
+      <div class="form-group">
+        <label for="expected_arrival">Expected Arrival</label>
+        <input type="datetime-local" id="expected_arrival" name="expected_arrival" class="form-control">
+      </div>
+      <div class="form-group">
+        <label for="notes">Notes</label>
+        <textarea id="notes" name="notes" class="form-control" rows="3"></textarea>
+      </div>
+
+      <div class="btn-group" style="margin-top:8px;">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Register Visitor</button>
+        <a href="{{ url_for('visitors.visitor_list') }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% block help_content %}
+<h4>Register Visitor</h4>
+<p>Fill in the visitor's details and assign a host. The visitor will be automatically screened against the watchlist when saved.</p>
+<ul>
+  <li><strong>First & Last Name</strong> are required</li>
+  <li><strong>Host</strong> is the employee the visitor is coming to see</li>
+  <li><strong>ID Type/Number</strong> improves watchlist matching accuracy</li>
+  <li>High-severity watchlist matches will block check-in</li>
+</ul>
+{% endblock %}
+{% endblock %}

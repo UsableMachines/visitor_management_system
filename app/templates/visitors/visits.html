@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Visits — VMS{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-clipboard-list"></i> Visits</h1>
+  <div class="btn-group">
+    <form class="form-inline" action="{{ url_for('visitors.visit_list') }}" method="GET">
+      <select name="status" class="form-control" style="width:180px;" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        {% for s in statuses %}
+        <option value="{{ s }}" {{ 'selected' if s == current_status else '' }}>{{ s.replace('_', ' ').title() }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    {% if current_user.can_manage_visitors() %}
+    <a href="{{ url_for('visitors.visitor_new') }}" class="btn btn-primary"><i class="fas fa-plus"></i> New Visit</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    {% if pagination and pagination.items %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Visitor</th>
+            <th>Host</th>
+            <th>Purpose</th>
+            <th>Status</th>
+            <th>Watchlist</th>
+            <th>Badge</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for visit in pagination.items %}
+          <tr>
+            <td><a href="{{ url_for('visitors.visit_detail', visit_id=visit.id) }}">{{ visit.visit_code }}</a></td>
+            <td>{{ visit.visitor.full_name }}</td>
+            <td>{{ visit.host.full_name if visit.host else '—' }}</td>
+            <td>{{ visit.purpose[:30] }}{{ '…' if visit.purpose|length > 30 else '' }}</td>
+            <td>
+              {% if visit.status.value == 'checked_in' %}
+                <span class="badge badge-success">Checked In</span>
+              {% elif visit.status.value == 'checked_out' %}
+                <span class="badge badge-secondary">Checked Out</span>
+              {% elif visit.status.value == 'denied' %}
+                <span class="badge badge-danger">Denied</span>
+              {% else %}
+                <span class="badge badge-info">{{ visit.status.value.replace('_', ' ').title() }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if visit.watchlist_match_level and visit.watchlist_match_level.value != 'none' %}
+                <span class="badge badge-{{ 'danger' if visit.watchlist_match_level.value in ('high','exact') else 'warning' }}">
+                  {{ visit.watchlist_match_level.value }}
+                </span>
+              {% else %}
+                <span class="badge badge-success">Clear</span>
+              {% endif %}
+            </td>
+            <td>{{ visit.badge.badge_number if visit.badge else '—' }}</td>
+            <td style="font-size:0.8rem;color:var(--color-text-muted);">{{ visit.created_at.strftime('%m/%d %H:%M') if visit.created_at else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+      {% if pagination.has_prev %}
+        <a href="{{ url_for('visitors.visit_list', page=pagination.prev_num, status=current_status) }}">&laquo;</a>
+      {% endif %}
+      {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+          <a href="{{ url_for('visitors.visit_list', page=p, status=current_status) }}" class="{{ 'current' if p == pagination.page else '' }}">{{ p }}</a>
+        {% else %}
+          <span>…</span>
+        {% endif %}
+      {% endfor %}
+      {% if pagination.has_next %}
+        <a href="{{ url_for('visitors.visit_list', page=pagination.next_num, status=current_status) }}">&raquo;</a>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <p style="text-align:center;color:var(--color-text-muted);padding:40px;">No visits found.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% block help_content %}
+<h4>Visits</h4>
+<p>View and manage all visits for your organization. Filter by status to find specific visits.</p>
+<ul>
+  <li><strong>Pre-Registered</strong> — Expected but not yet checked in</li>
+  <li><strong>Checked In</strong> — Currently on-site</li>
+  <li><strong>Checked Out</strong> — Visit completed</li>
+  <li><strong>Denied</strong> — Entry was denied</li>
+</ul>
+<p>Click a visit code to view full details, check in/out, or run AI analysis.</p>
+{% endblock %}
+{% endblock %}

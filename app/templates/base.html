@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ current_user.theme if current_user.is_authenticated and current_user.theme else 'light' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Visitor Management System{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% if current_user.is_authenticated %}
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <i class="fas fa-id-badge"></i>
+        <span>VMS</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="{{ url_for('main.dashboard') }}" class="nav-item {% if request.endpoint == 'main.dashboard' or request.endpoint == 'main.index' %}active{% endif %}">
+          <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+        </a>
+        <a href="{{ url_for('visitors.visitor_list') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('visitors.visitor') %}active{% endif %}">
+          <i class="fas fa-users"></i><span>Visitors</span>
+        </a>
+        <a href="{{ url_for('visitors.visit_list') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('visitors.visit') and 'visitor' not in request.endpoint %}active{% endif %}">
+          <i class="fas fa-clipboard-list"></i><span>Visits</span>
+        </a>
+        <a href="{{ url_for('hosts.host_list') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('hosts.') %}active{% endif %}">
+          <i class="fas fa-user-tie"></i><span>Hosts</span>
+        </a>
+        <a href="{{ url_for('badges.badge_list') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('badges.') %}active{% endif %}">
+          <i class="fas fa-id-card"></i><span>Badges</span>
+        </a>
+        {% if current_user.can_view_watchlist() %}
+        <a href="{{ url_for('watchlist.watchlist_list') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('watchlist.') %}active{% endif %}">
+          <i class="fas fa-exclamation-triangle"></i><span>Watchlist</span>
+        </a>
+        {% endif %}
+        {% if current_user.can_view_audit() %}
+        <a href="{{ url_for('audit.audit_list') }}" class="nav-item {% if request.endpoint == 'audit.audit_list' %}active{% endif %}">
+          <i class="fas fa-file-alt"></i><span>Audit Log</span>
+        </a>
+        {% endif %}
+        {% if current_user.can_manage_org() %}
+        <div class="nav-divider"></div>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('admin.') %}active{% endif %}">
+          <i class="fas fa-cog"></i><span>Admin</span>
+        </a>
+        {% endif %}
+        <div class="nav-divider"></div>
+        <a href="{{ url_for('getting_started.getting_started') }}" class="nav-item {% if request.endpoint == 'getting_started.getting_started' %}active{% endif %}">
+          <i class="fas fa-book-open"></i><span>Getting Started</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <div class="main-content">
+      <!-- Top bar -->
+      <header class="topbar">
+        <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="topbar-right">
+          <button class="btn-icon" id="helpBtn" onclick="toggleHelp()" title="Help">
+            <i class="fas fa-question-circle"></i>
+          </button>
+          <button class="btn-icon" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">
+            <i class="fas fa-moon" id="themeIcon"></i>
+          </button>
+          <a href="{{ url_for('main.notifications') }}" class="btn-icon notification-btn" title="Notifications">
+            <i class="fas fa-bell"></i>
+            <span class="notif-badge" id="notifBadge" style="display:none"></span>
+          </a>
+          <div class="user-menu">
+            <span class="user-name">{{ current_user.full_name }}</span>
+            <span class="user-role">{{ current_user.role.name.replace('_', ' ').title() if current_user.role else '' }}</span>
+          </div>
+          <a href="{{ url_for('main.profile') }}" class="btn-icon" title="Profile"><i class="fas fa-user-circle"></i></a>
+          <a href="{{ url_for('auth.logout') }}" class="btn-icon" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+      </header>
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-container">
+          {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="flash-close">&times;</button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Page content -->
+      <main class="page-content">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+    <!-- Help panel -->
+    <div class="help-panel" id="helpPanel">
+      <div class="help-panel-header">
+        <h3><i class="fas fa-question-circle"></i> Help</h3>
+        <button onclick="toggleHelp()" class="help-close">&times;</button>
+      </div>
+      <div class="help-panel-body">
+        {% block help_content %}
+        <p>Welcome to the Visitor Management System. Use the sidebar to navigate between sections.</p>
+        <ul>
+          <li><strong>Dashboard</strong> — Overview of today's activity</li>
+          <li><strong>Visitors</strong> — Register and manage visitors</li>
+          <li><strong>Visits</strong> — Track visit status, check-in/out</li>
+          <li><strong>Hosts</strong> — View available hosts</li>
+          <li><strong>Badges</strong> — Manage issued badges</li>
+          <li><strong>Watchlist</strong> — Security screening list</li>
+          <li><strong>Audit Log</strong> — Activity history</li>
+        </ul>
+        {% endblock %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="public-layout">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">
+          <span>{{ message }}</span>
+          <button onclick="this.parentElement.remove()" class="flash-close">&times;</button>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+    {% block public_content %}{% endblock %}
+  </div>
+  {% endif %}
+
+  <script>
+    // Theme toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      const icon = document.getElementById('themeIcon');
+      if (icon) icon.className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+      fetch('{{ url_for("main.toggle_theme") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCSRF()},
+        body: JSON.stringify({theme: next})
+      }).catch(() => {});
+    }
+    // Set initial icon
+    (function() {
+      const t = document.documentElement.getAttribute('data-theme');
+      const icon = document.getElementById('themeIcon');
+      if (icon && t === 'dark') icon.className = 'fas fa-sun';
+    })();
+
+    // Help panel
+    function toggleHelp() {
+      document.getElementById('helpPanel').classList.toggle('open');
+    }
+
+    // CSRF helper
+    function getCSRF() {
+      const el = document.querySelector('meta[name="csrf-token"]');
+      if (el) return el.content;
+      const cookie = document.cookie.split(';').find(c => c.trim().startsWith('csrf_token='));
+      return cookie ? cookie.split('=')[1] : '';
+    }
+
+    // Notification badge polling
+    {% if current_user.is_authenticated %}
+    (function pollNotifs() {
+      fetch('{{ url_for("main.notification_count") }}')
+        .then(r => r.json())
+        .then(d => {
+          const badge = document.getElementById('notifBadge');
+          if (badge) {
+            if (d.count > 0) {
+              badge.textContent = d.count;
+              badge.style.display = 'flex';
+            } else {
+              badge.style.display = 'none';
+            }
+          }
+        })
+        .catch(() => {});
+      setTimeout(pollNotifs, 30000);
+    })();
+    {% endif %}
+
+    // Auto-dismiss flash messages
+    setTimeout(() => {
+      document.querySelectorAll('.flash').forEach(el => el.remove());
+    }, 8000);
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Badges — VMS{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-id-card"></i> Badges</h1>
+  <form class="form-inline" action="{{ url_for('badges.badge_list') }}" method="GET">
+    <select name="status" class="form-control" style="width:180px;" onchange="this.form.submit()">
+      <option value="">All Statuses</option>
+      {% for s in statuses %}
+      <option value="{{ s }}" {{ 'selected' if s == current_status else '' }}>{{ s.title() }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    {% if pagination and pagination.items %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Badge #</th><th>Visitor</th><th>Visit Code</th><th>Status</th><th>Issued</th><th>Returned</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for b in pagination.items %}
+          <tr>
+            <td><strong>{{ b.badge_number }}</strong></td>
+            <td>{{ b.visit.visitor.full_name if b.visit and b.visit.visitor else '—' }}</td>
+            <td><a href="{{ url_for('visitors.visit_detail', visit_id=b.visit_id) }}">{{ b.visit.visit_code if b.visit else '—' }}</a></td>
+            <td>
+              <span class="badge badge-{{ 'success' if b.status.value == 'active' else 'secondary' if b.status.value == 'returned' else 'danger' }}">{{ b.status.value }}</span>
+            </td>
+            <td style="font-size:0.8rem;">{{ b.issued_at.strftime('%m/%d %H:%M') if b.issued_at else '—' }}</td>
+            <td style="font-size:0.8rem;">{{ b.returned_at.strftime('%m/%d %H:%M') if b.returned_at else '—' }}</td>
+            <td>
+              {% if b.status.value == 'active' %}
+              <form method="POST" action="{{ url_for('badges.badge_report_lost', badge_id=b.id) }}" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger btn-sm">Report Lost</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+      {% if pagination.has_prev %}<a href="{{ url_for('badges.badge_list', page=pagination.prev_num, status=current_status) }}">&laquo;</a>{% endif %}
+      {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}<a href="{{ url_for('badges.badge_list', page=p, status=current_status) }}" class="{{ 'current' if p == pagination.page else '' }}">{{ p }}</a>{% else %}<span>…</span>{% endif %}
+      {% endfor %}
+      {% if pagination.has_next %}<a href="{{ url_for('badges.badge_list', page=pagination.next_num, status=current_status) }}">&raquo;</a>{% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <p style="text-align:center;color:var(--color-text-muted);padding:40px;">No badges found.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% block help_content %}
+<h4>Badges</h4>
+<p>Badges are automatically issued when a visitor checks in. They are returned when the visitor checks out.</p>
+<ul>
+  <li><strong>Active</strong> — Currently issued to a visitor on-site</li>
+  <li><strong>Returned</strong> — Visitor checked out and returned the badge</li>
+  <li><strong>Lost</strong> — Badge reported lost; logged for security</li>
+</ul>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Visitors — VMS{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-users"></i> Visitors</h1>
+  <div class="btn-group">
+    <form class="form-inline" action="{{ url_for('visitors.visitor_list') }}" method="GET">
+      <input type="text" name="q" class="form-control" placeholder="Search visitors…" value="{{ search }}" style="width:220px;">
+      <button type="submit" class="btn btn-secondary btn-sm"><i class="fas fa-search"></i></button>
+    </form>
+    {% if current_user.can_manage_visitors() %}
+    <a href="{{ url_for('visitors.visitor_new') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Register</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    {% if pagination and pagination.items %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Company</th>
+            <th>Phone</th>
+            <th>ID Type</th>
+            <th>Registered</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in pagination.items %}
+          <tr>
+            <td><strong>{{ v.full_name }}</strong></td>
+            <td>{{ v.email or '—' }}</td>
+            <td>{{ v.company or '—' }}</td>
+            <td>{{ v.phone or '—' }}</td>
+            <td>{{ v.id_type or '—' }}</td>
+            <td style="font-size:0.8rem;color:var(--color-text-muted);">{{ v.created_at.strftime('%m/%d/%Y') if v.created_at else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+      {% if pagination.has_prev %}
+        <a href="{{ url_for('visitors.visitor_list', page=pagination.prev_num, q=search) }}">&laquo;</a>
+      {% endif %}
+      {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+          <a href="{{ url_for('visitors.visitor_list', page=p, q=search) }}" class="{{ 'current' if p == pagination.page else '' }}">{{ p }}</a>
+        {% else %}
+          <span>…</span>
+        {% endif %}
+      {% endfor %}
+      {% if pagination.has_next %}
+        <a href="{{ url_for('visitors.visitor_list', page=pagination.next_num, q=search) }}">&raquo;</a>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <p style="text-align:center;color:var(--color-text-muted);padding:40px;">No visitors found.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% block help_content %}
+<h4>Visitors</h4>
+<p>This page lists all registered visitors for your organization. Use the search bar to find visitors by name, email, or company.</p>
+<ul>
+  <li>Click <strong>Register</strong> to add a new visitor and create a visit</li>
+  <li>Visitors are automatically screened against the watchlist during registration</li>
+</ul>
+{% endblock %}
+{% endblock %}

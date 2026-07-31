@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Users — Admin — VMS{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-users"></i> Users</h1>
+  <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    {% if users %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Username</th><th>Name</th><th>Email</th><th>Role</th><th>Organization</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td><strong>{{ u.username }}</strong></td>
+            <td>{{ u.full_name }}</td>
+            <td>{{ u.email }}</td>
+            <td><span class="badge badge-info">{{ u.role.name.replace('_', ' ').title() if u.role else '—' }}</span></td>
+            <td>{{ u.organization.name if u.organization else '—' }}</td>
+            <td><span class="badge badge-{{ 'success' if u.is_active else 'secondary' }}">{{ 'Active' if u.is_active else 'Inactive' }}</span></td>
+            <td><a href="{{ url_for('admin.user_edit', user_id=u.id) }}" class="btn btn-secondary btn-sm">Edit</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="text-align:center;color:var(--color-text-muted);padding:40px;">No users found.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% block help_content %}
+<h4>User Management</h4>
+<p>View and edit user accounts. Click "Edit" to change a user's role, organization, status, or reset their password.</p>
+<p>Roles determine what each user can access in the system.</p>
+{% endblock %}
+{% endblock %}

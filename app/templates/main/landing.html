@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block body_class %}page-index{% endblock %}
+{% block title %}Visitor Management System{% endblock %}
+{% block public_content %}
+<div class="landing">
+  <div class="landing-icon"><i class="fas fa-id-badge"></i></div>
+  <h1>Visitor Management System</h1>
+  <p>Streamline visitor registration, host notification, badge issuance, watchlist screening, and audit logging — all in one platform.</p>
+  <div class="btn-group">
+    <a href="{{ url_for('auth.login') }}" class="btn btn-primary"><i class="fas fa-sign-in-alt"></i> Sign In</a>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-secondary"><i class="fas fa-user-plus"></i> Register</a>
+    <a href="{{ url_for('getting_started.getting_started') }}" class="btn btn-secondary"><i class="fas fa-book-open"></i> Getting Started</a>
+  </div>
+</div>
+{% endblock %}

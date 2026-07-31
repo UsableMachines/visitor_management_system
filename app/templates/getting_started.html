@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block body_class %}page-account{% endblock %}
+{% block title %}Getting Started — VMS{% endblock %}
+{% block content %}
+<div class="gs-container">
+  <div class="gs-header">
+    <h1><i class="fas fa-book-open" style="color:var(--color-primary);"></i> Getting Started</h1>
+    <p>Learn how to set up and use the Visitor Management System</p>
+  </div>
+
+  <div class="gs-nav">
+    <a href="#step1">Overview</a>
+    <a href="#step2">Prerequisites</a>
+    <a href="#step3">First Launch</a>
+    <a href="#step4">Register Visitors</a>
+    <a href="#step5">Check In / Out</a>
+    <a href="#step6">Watchlist</a>
+    <a href="#step7">AI Analysis</a>
+    <a href="#step8">Next Steps</a>
+  </div>
+
+  <div id="step1" class="gs-step">
+    <div class="gs-step-number">1</div>
+    <div class="gs-step-content">
+      <h3>What Is This App?</h3>
+      <p>The Visitor Management System (VMS) is a complete platform for managing visitors at your facility. It handles visitor registration, host notification, badge issuance, watchlist screening, AI-powered risk analysis, and full audit logging — all with multi-tenant support and role-based access control.</p>
+    </div>
+  </div>
+
+  <div id="step2" class="gs-step">
+    <div class="gs-step-number">2</div>
+    <div class="gs-step-content">
+      <h3>Prerequisites</h3>
+      <p>To get started, you need:</p>
+      <ul style="margin-top:8px;padding-left:20px;color:var(--color-text-muted);">
+        <li>A user account (register on the login page or contact your admin)</li>
+        <li>An assigned role (Front Desk, Security, Host, Org Admin, or Super Admin)</li>
+        <li>For AI analysis: KINDO_API_TOKEN and KINDO_AGENT_ID environment variables configured by your administrator</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="step3" class="gs-step">
+    <div class="gs-step-number">3</div>
+    <div class="gs-step-content">
+      <h3>First Launch</h3>
+      <p>After logging in, you'll land on the Dashboard. This shows today's visitor counts, currently checked-in visitors, pending pre-registrations, and a list of recent visits. The sidebar provides navigation to all sections of the system.</p>
+      <p style="margin-top:8px;">Default admin credentials: <strong>admin / admin</strong>. Change the password immediately after first login via the Profile page.</p>
+    </div>
+  </div>
+
+  <div id="step4" class="gs-step">
+    <div class="gs-step-number">4</div>
+    <div class="gs-step-content">
+      <h3>Register Visitors</h3>
+      <p>Click <strong>Register Visitor</strong> from the Dashboard or navigate to <strong>Visitors → Register</strong>. Fill in the visitor's details, select a host, and specify the purpose of the visit. The visitor will be automatically screened against the watchlist upon registration.</p>
+    </div>
+  </div>
+
+  <div id="step5" class="gs-step">
+    <div class="gs-step-number">5</div>
+    <div class="gs-step-content">
+      <h3>Check In / Check Out</h3>
+      <p>When a visitor arrives, open their visit and click <strong>Check In</strong>. A badge is automatically issued and the host is notified. When the visitor leaves, click <strong>Check Out</strong> to mark them as departed and return their badge.</p>
+      <p style="margin-top:8px;">If a visitor has a high or exact watchlist match, check-in is blocked until a security review clears them or denies entry.</p>
+    </div>
+  </div>
+
+  <div id="step6" class="gs-step">
+    <div class="gs-step-number">6</div>
+    <div class="gs-step-content">
+      <h3>Watchlist Screening</h3>
+      <p>Security and admin users can manage the watchlist under <strong>Watchlist</strong>. Add individuals who should be flagged or denied entry. Severity levels (high, medium, low) determine whether check-in is blocked or just flagged.</p>
+    </div>
+  </div>
+
+  <div id="step7" class="gs-step">
+    <div class="gs-step-number">7</div>
+    <div class="gs-step-content">
+      <h3>AI-Powered Risk Analysis</h3>
+      <p>On any visit detail page, click <strong>Run Analysis</strong> to send visitor data to the Kindo AI enrichment agent. The agent returns a risk score, risk level, detailed findings, and recommendations. Results are saved to the visit record for future reference.</p>
+      <p style="margin-top:8px;">This feature requires KINDO_API_TOKEN and KINDO_AGENT_ID to be configured. If not set, a configuration message is shown instead.</p>
+    </div>
+  </div>
+
+  <div id="step8" class="gs-step">
+    <div class="gs-step-number">8</div>
+    <div class="gs-step-content">
+      <h3>Next Steps</h3>
+      <p>Explore these additional features:</p>
+      <ul style="margin-top:8px;padding-left:20px;color:var(--color-text-muted);">
+        <li><strong>Badges</strong> — Track all issued badges and report lost ones</li>
+        <li><strong>Audit Log</strong> — Review a complete history of all system actions</li>
+        <li><strong>Admin</strong> — Manage users, roles, and organizations</li>
+        <li><strong>Notifications</strong> — Stay updated on visitor activity (click the bell icon)</li>
+        <li><strong>Dark Mode</strong> — Toggle the theme using the moon/sun icon in the top bar</li>
+        <li><strong>Help</strong> — Click the ? icon on any page for context-specific guidance</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+{% block help_content %}
+<h4>Getting Started</h4>
+<p>This page provides a step-by-step guide to using the Visitor Management System. Scroll through the numbered steps to learn about each feature.</p>
+<p>Use the quick navigation links at the top to jump to a specific section.</p>
+{% endblock %}
+{% endblock %}

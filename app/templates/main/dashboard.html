@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — VMS{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+  <a href="{{ url_for('visitors.visitor_new') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Register Visitor</a>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon primary"><i class="fas fa-calendar-day"></i></div>
+    <div>
+      <div class="stat-value">{{ total_today|default(0) }}</div>
+      <div class="stat-label">Visits Today</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon info"><i class="fas fa-sign-in-alt"></i></div>
+    <div>
+      <div class="stat-value">{{ checked_in|default(0) }}</div>
+      <div class="stat-label">Currently Checked In</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon accent"><i class="fas fa-clock"></i></div>
+    <div>
+      <div class="stat-value">{{ pre_registered|default(0) }}</div>
+      <div class="stat-label">Pre-Registered</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon danger"><i class="fas fa-ban"></i></div>
+    <div>
+      <div class="stat-value">{{ denied|default(0) }}</div>
+      <div class="stat-label">Denied Today</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span><i class="fas fa-list"></i> Recent Visits</span>
+    <a href="{{ url_for('visitors.visit_list') }}" class="btn btn-secondary btn-sm">View All</a>
+  </div>
+  <div class="card-body">
+    {% if recent_visits %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Visitor</th>
+            <th>Host</th>
+            <th>Purpose</th>
+            <th>Status</th>
+            <th>Watchlist</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for visit in recent_visits %}
+          <tr>
+            <td><a href="{{ url_for('visitors.visit_detail', visit_id=visit.id) }}">{{ visit.visit_code }}</a></td>
+            <td>{{ visit.visitor.full_name }}</td>
+            <td>{{ visit.host.full_name if visit.host else '—' }}</td>
+            <td>{{ visit.purpose[:40] }}{{ '…' if visit.purpose|length > 40 else '' }}</td>
+            <td>
+              {% if visit.status.value == 'checked_in' %}
+                <span class="badge badge-success">Checked In</span>
+              {% elif visit.status.value == 'checked_out' %}
+                <span class="badge badge-secondary">Checked Out</span>
+              {% elif visit.status.value == 'denied' %}
+                <span class="badge badge-danger">Denied</span>
+              {% elif visit.status.value == 'pre_registered' %}
+                <span class="badge badge-info">Pre-Registered</span>
+              {% else %}
+                <span class="badge badge-secondary">{{ visit.status.value }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if visit.watchlist_match_level and visit.watchlist_match_level.value != 'none' %}
+                {% if visit.watchlist_match_level.value in ('high', 'exact') %}
+                  <span class="badge badge-danger">{{ visit.watchlist_match_level.value }}</span>
+                {% elif visit.watchlist_match_level.value == 'medium' %}
+                  <span class="badge badge-warning">{{ visit.watchlist_match_level.value }}</span>
+                {% else %}
+                  <span class="badge badge-info">{{ visit.watchlist_match_level.value }}</span>
+                {% endif %}
+              {% else %}
+                <span class="badge badge-success">Clear</span>
+              {% endif %}
+            </td>
+            <td style="font-size:0.8rem;color:var(--color-text-muted);">{{ visit.created_at.strftime('%m/%d %H:%M') if visit.created_at else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="text-align:center;color:var(--color-text-muted);padding:40px;">No visits recorded yet. <a href="{{ url_for('visitors.visitor_new') }}">Register your first visitor</a>.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% block help_content %}
+<h4>Dashboard</h4>
+<p>This is your overview of today's visitor activity.</p>
+<ul>
+  <li><strong>Visits Today</strong> — Total visits created today</li>
+  <li><strong>Currently Checked In</strong> — Visitors on-site right now</li>
+  <li><strong>Pre-Registered</strong> — Expected visitors not yet checked in</li>
+  <li><strong>Denied Today</strong> — Visitors denied entry today</li>
+</ul>
+<p>Click <strong>Register Visitor</strong> to add a new visitor. Use the table to quickly view and access recent visits.</p>
+{% endblock %}
+{% endblock %}

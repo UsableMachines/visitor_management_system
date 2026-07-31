@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Audit Log — VMS{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-file-alt"></i> Audit Log</h1>
+  <form class="form-inline" action="{{ url_for('audit.audit_list') }}" method="GET">
+    <select name="action" class="form-control" style="width:200px;" onchange="this.form.submit()">
+      <option value="">All Actions</option>
+      {% for a in actions %}
+      <option value="{{ a }}" {{ 'selected' if a == current_action else '' }}>{{ a.replace('_', ' ').title() }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    {% if pagination and pagination.items %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Timestamp</th><th>Action</th><th>Entity</th><th>Details</th><th>User</th><th>IP</th></tr></thead>
+        <tbody>
+          {% for log in pagination.items %}
+          <tr>
+            <td style="font-size:0.8rem;white-space:nowrap;">{{ log.created_at.strftime('%m/%d/%Y %H:%M:%S') if log.created_at else '—' }}</td>
+            <td><span class="badge badge-info">{{ log.action }}</span></td>
+            <td>{{ log.entity_type }} {{ '#' ~ log.entity_id if log.entity_id else '' }}</td>
+            <td>{{ log.details[:50] }}{{ '…' if log.details|length > 50 else '' }}</td>
+            <td>{{ log.user.username if log.user else '—' }}</td>
+            <td style="font-size:0.8rem;color:var(--color-text-muted);">{{ log.ip_address or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+      {% if pagination.has_prev %}<a href="{{ url_for('audit.audit_list', page=pagination.prev_num, action=current_action) }}">&laquo;</a>{% endif %}
+      {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}<a href="{{ url_for('audit.audit_list', page=p, action=current_action) }}" class="{{ 'current' if p == pagination.page else '' }}">{{ p }}</a>{% else %}<span>…</span>{% endif %}
+      {% endfor %}
+      {% if pagination.has_next %}<a href="{{ url_for('audit.audit_list', page=pagination.next_num, action=current_action) }}">&raquo;</a>{% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <p style="text-align:center;color:var(--color-text-muted);padding:40px;">No audit log entries found.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% block help_content %}
+<h4>Audit Log</h4>
+<p>The audit log records all significant actions in the system for accountability and compliance. Filter by action type to find specific events.</p>
+<p>Logged actions include: logins/logouts, visitor registrations, check-ins/outs, denials, watchlist changes, badge events, AI analyses, and administrative changes.</p>
+{% endblock %}
+{% endblock %}

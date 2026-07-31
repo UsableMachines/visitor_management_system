@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Edit User — Admin — VMS{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="fas fa-user-edit"></i> Edit User: {{ user.username }}</h1>
+  <a href="{{ url_for('admin.user_list') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+
+<div class="card" style="max-width:600px;">
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('admin.user_edit', user_id=user.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="first_name">First Name</label>
+          <input type="text" id="first_name" name="first_name" class="form-control" value="{{ user.first_name }}">
+        </div>
+        <div class="form-group">
+          <label for="last_name">Last Name</label>
+          <input type="text" id="last_name" name="last_name" class="form-control" value="{{ user.last_name }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="phone">Phone</label>
+          <input type="text" id="phone" name="phone" class="form-control" value="{{ user.phone or '' }}">
+        </div>
+        <div class="form-group">
+          <label for="department">Department</label>
+          <input type="text" id="department" name="department" class="form-control" value="{{ user.department or '' }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="role_id">Role</label>
+        <select id="role_id" name="role_id" class="form-control">
+          {% for r in roles %}
+          <option value="{{ r.id }}" {{ 'selected' if user.role_id == r.id else '' }}>{{ r.name.replace('_', ' ').title() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% if current_user.has_role('super_admin') %}
+      <div class="form-group">
+        <label for="organization_id">Organization</label>
+        <select id="organization_id" name="organization_id" class="form-control">
+          {% for o in orgs %}
+          <option value="{{ o.id }}" {{ 'selected' if user.organization_id == o.id else '' }}>{{ o.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="is_active" name="is_active" {{ 'checked' if user.is_active else '' }}>
+        <label for="is_active" style="margin:0;font-weight:normal;">Active</label>
+      </div>
+      <div class="form-group">
+        <label for="new_password">New Password (leave blank to keep current)</label>
+        <input type="password" id="new_password" name="new_password" class="form-control">
+      </div>
+      <div class="btn-group">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+        <a href="{{ url_for('admin.user_list') }}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
